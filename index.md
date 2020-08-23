@@ -1,8 +1,14 @@
 ---
-layout: post
-title: ""
+layout: index
+title: "posts"
 ---
-<h1>{{ site.posts.last.title }}</h1>
-{{ site.posts.last.content }}
 
-:point_right: please use the posts link to your left to see all posts :point_left:
+<h1> Posts </h1>
+<div class="posts">
+  {% for post in site.posts %}
+    <div>
+      <a href="{{ post.url }}">{{ post.title }}</a> <i>- posted on  {{ post.date | date_to_string }}</i>
+      {{ post.excerpt }}
+    </div>
+  {% endfor %}
+</div>
