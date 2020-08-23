@@ -1,0 +1,21 @@
+---
+# Jekyll needs front matter for SCSS files
+---
+
+$link-color: navy;
+
+@media (min-width: 49rem) {
+
+    #sidebar .site-title {
+        font-size: 2.20rem !important;
+    }
+    .container {
+        padding:3rem 3rem 0 !important;
+    }
+    h1 {
+        font-size: 1.5rem !important;
+    }
+}
+
+
+@import "hydeout";
