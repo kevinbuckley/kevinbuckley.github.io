@@ -8,20 +8,10 @@ url: "" # the base hostname & protocol for your site, e.g. http://example.com
 
 # Build settings
 theme: jekyll-theme-hydeout
-sidebar_home_link:  true
+sidebar_home_link:  false
 
 plugins:
   - jekyll-feed
 
 repo: "https://github.com/kevinbuckley"
-
-permalink: /:year-:month-:day-:title/
-
-pagination:
-  enabled: true
-  per_page: 3
-  permalink: "/page/:num/"
-  title_suffix: " - page :num"
-  limit: 0
-  sort_field: "date"
-  sort_reverse: true
+twitter: "https://twitter.com/kbucktothemax"

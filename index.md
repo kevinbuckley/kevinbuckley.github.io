@@ -1,14 +1,14 @@
 ---
-layout: index
+layout: default
 title: "posts"
+sidebar_link: true
 ---
 
-<h1> Posts </h1>
+<h3> posts </h3>
 <div class="posts">
   {% for post in site.posts %}
     <div>
-      <a href="{{ post.url }}">{{ post.title }}</a> <i>- posted on  {{ post.date | date_to_string }}</i>
-      {{ post.excerpt }}
+       <span> {{ post.date | date_to_string }} ~ </span> <a href="{{ post.url }}">{{ post.title }}</a> 
     </div>
   {% endfor %}
 </div>
