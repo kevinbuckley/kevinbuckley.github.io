@@ -10,5 +10,5 @@ sidebar_link: true
   
   I set this blog up for two reasons.  To get better at writting and to stop forgetting things I have learned.  
   
-  <br><br>Please feel free to contact me if you would like chat.   
+  <br><br>Please feel free to contact me if you would like chat.   https://twitter.com/kbucktothemax 
 </p>
