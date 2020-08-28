@@ -10,9 +10,9 @@ tags: python aws textract
 <br>
 ### Setup AWS Textract access and user
 
-1. setup an aws account in us-east2.  you'll end up needing to put a credit card # in but don't worry, the charges are in the single digits per month from my experience.  https://us-east-2.console.aws.amazon.com/
+1. setup an aws account in us-east2.  you'll end up needing to put a credit card # in but don't worry, the charges are in the single digits per month from my experience.  [https://us-east-2.console.aws.amazon.com/](https://us-east-2.console.aws.amazon.com/)
 
-2. create a user for the scritp to use. navigate to https://console.aws.amazon.com/iam/home?region=us-east-2#/users, follow through the wizard with the following instructions:
+2. create a user for the scritp to use. navigate to [https://console.aws.amazon.com/iam/home?region=us-east-2#/users](https://console.aws.amazon.com/iam/home?region=us-east-2#/users), follow through the wizard with the following instructions:
     - Whatever name you want
     - Set Access Type to **Programmatic access**
     - Create a permission group, add the permission **AmazonTextractFullAccess** to it. 
@@ -62,6 +62,6 @@ Now we have an array with all the sweet text from the image.  Nice.
 
 ----
 **resources:**
-- https://aws.amazon.com/textract/
-- https://textract.readthedocs.io/
-- https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html
+- [https://aws.amazon.com/textract/](https://aws.amazon.com/textract/)
+- [https://textract.readthedocs.io/](https://textract.readthedocs.io/)
+- [https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html](https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html)

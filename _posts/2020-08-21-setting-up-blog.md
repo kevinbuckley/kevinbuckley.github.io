@@ -15,7 +15,7 @@ I found lots of tutorials on setting up a github pages blog with jekyll but none
 
 1. Created new site using `jekyll new blog`.  I then moved everything from the `/blog` folder back to root (not necessary, I just preferred it there).
 
-1. Installed hydeout theme by adding `gem "jekyll-theme-hydeout", "~> 4.1"` to my Gemfile.  Ran `bundle install`.  (reference: https://github.com/fongandrew/hydeout)
+1. Installed hydeout theme by adding `gem "jekyll-theme-hydeout", "~> 4.1"` to my Gemfile.  Ran `bundle install`.  (reference: [https://github.com/fongandrew/hydeout](https://github.com/fongandrew/hydeout))
 
 <br>
 ### Configuring Jekyll 
@@ -66,7 +66,7 @@ I found lots of tutorials on setting up a github pages blog with jekyll but none
 
 ----
 **resources:**
-* https://jekyllrb.com/docs/
-* https://jekyllrb.com/docs/continuous-integration/github-actions/
-* https://github.com/fongandrew/hydeout
+* [https://jekyllrb.com/docs/](https://jekyllrb.com/docs/)
+* [https://jekyllrb.com/docs/continuous-integration/github-actions/](https://jekyllrb.com/docs/continuous-integration/github-actions/)
+* [https://github.com/fongandrew/hydeout](https://github.com/fongandrew/hydeout)
 
