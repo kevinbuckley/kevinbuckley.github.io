@@ -5,7 +5,7 @@ date:   2020-08-27 12:00:00 -0000
 tags: python aws textract
 ---
 
- I found lots of tutorials on setting up a github pages blog with jekyll but none that had every step I did.  Here's every step I did.   *Disclaimer: This applies to jekyll v4*
+ To help with a game I play with some friends, I needed to find a way to read text out of screenshots.  I found Textract, an Amazon API that can be used to do this.  Here's every step I did. 
 
 <br>
 ### Setup AWS Textract access and user
