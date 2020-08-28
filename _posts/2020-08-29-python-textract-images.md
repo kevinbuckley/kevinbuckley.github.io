@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "using aws textract to read text from images"
-date:   2020-08-27 00:00:00 -0000
+date:   2020-08-27 12:00:00 -0000
 tags: python aws textract
 ---
 

@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "setting up the blog"
-date:   2020-08-21 00:00:00 -0000
+date:   2020-08-21 12:00:00 -0000
 tags: github ruby markdown jekyll
 ---
 
