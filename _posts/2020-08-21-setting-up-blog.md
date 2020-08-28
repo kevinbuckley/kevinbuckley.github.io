@@ -1,13 +1,11 @@
 ---
 layout: post
 title:  "setting up the blog"
-date:   2020-08-21 23:13:09 -0400
+date:   2020-08-21 00:00:00 -0000
 tags: github ruby markdown jekyll
 ---
 
-I found lots of tutorials on setting up a github pages blog with jekyll but none that had every step I did.  Here's every step I did.
-
-*Disclaimer: This applies to jekyll v4*
+I found lots of tutorials on setting up a github pages blog with jekyll but none that had every step I did.  This applies to jekyll v4.  Here's every step I did. 
 
 <br>
 ### Installation of Repository/Ruby/Jekyll/Hydeout
