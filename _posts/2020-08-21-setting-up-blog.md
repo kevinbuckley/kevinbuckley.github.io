@@ -9,7 +9,8 @@ I found lots of tutorials on setting up a github pages blog with jekyll but none
 
 <br>
 ### Installation of Repository/Ruby/Jekyll/Hydeout
-1. Created new repo under my github account.  cloned repo locally and `cd` into that directory.
+
+1. Created new repo under my github account.  named `<username>.github.io` so it's picked up by github pages.  cloned repo locally and `cd` into that directory.
 
 1.  Followed [these](https://jekyllrb.com/docs/installation/macos/) instructions to install ruby and jekyll
 
