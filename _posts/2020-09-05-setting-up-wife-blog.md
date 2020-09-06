@@ -1,8 +1,8 @@
 ---
 layout: post
 title:  "using aws, route53, lightsail to setup a wordpress blog"
-date:   2020-09-27 12:00:00 -0000
-tags: python aws textract
+date:   2020-09-5 12:00:00 -0000
+tags: aws lightsail route53 letsencrypt
 ---
 
  My wife asked me to setup a travel blog for her.  I wanted to maximize our flexbility with look and feel, have no adds and be as cheap as possible.  We ended up with a wordpress instance on AWS Lightsail with the domain name from aws as well.  Found really good tutorials for this so I'll link those.  You can find the blog here [https://travel.nomadley.com](https://travel.nomadley.com)
