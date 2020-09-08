@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "setting up the blog"
+title:  "using jekyll, github pages, github actions to setup this blog"
 date:   2020-08-21 12:00:00 -0000
 tags: github ruby markdown jekyll
 ---

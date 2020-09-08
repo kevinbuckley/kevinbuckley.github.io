@@ -23,8 +23,13 @@ $link-color: navy;
     }
 }
 .posts {
-    span {
+    .dt {
         color: #999;
+        padding-top:15px;
+    }
+    div > a {
+        color: #007bff;
+        font-size: 20px;
     }
 }
 

@@ -4,11 +4,11 @@ title: "posts"
 sidebar_link: true
 ---
 
-<h3> posts </h3>
 <div class="posts">
   {% for post in site.posts %}
-    <div>
-       <span> {{ post.date | date_to_string }} ~ </span> <a href="{{ post.url }}">{{ post.title }}</a> 
-    </div>
+    <div class="dt">{{ post.date | date_to_string }} </div>
+    <div><a href="{{ post.url }}">{{ post.title }}</a> </div>
+    {{ post.excerpt }}
+
   {% endfor %}
 </div>
