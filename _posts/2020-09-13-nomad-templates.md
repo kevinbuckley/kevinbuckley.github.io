@@ -22,11 +22,11 @@ job "login-web-server" {
     task "web-server" {
 ```
 
-The datacenter property makes it so the job file only can be used for one environment.  but once you have it templated like below, you can just specify it once in the template and built out full files for submission.  For this example, we picked `@{obj.}` as our templating special characters.  The python gets easier with the `obj` part so you can bind an object to the template.
+The datacenter property makes it so the job file only can be used for one environment.  but once you have it templated like below, you can just specify it once in the template and built out full files for submission.  For this example, we picked `{$ obj. $}` as our templating special characters.  The python gets easier with the `obj` part so you can bind an object to the template.
 
 ```
 job "login-web-server" {
-  datacenters = ["@{obj.datacenter}"]
+  datacenters = ["{$ obj.datacenter $}"]
 
   group "login-group" {
     task "web-server" {
