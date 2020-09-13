@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2020-09-13T16:38:50+00:00</updated><id>/feed.xml</id><title type="html">kevin buckley</title><subtitle>things I learn in tech</subtitle><entry><title type="html">using python and jinja2 for templating Hashicorp Nomad job files</title><link href="/2020/09/13/nomad-templates.html" rel="alternate" type="text/html" title="using python and jinja2 for templating Hashicorp Nomad job files" /><published>2020-09-13T12:00:00+00:00</published><updated>2020-09-13T12:00:00+00:00</updated><id>/2020/09/13/nomad-templates</id><content type="html" xml:base="/2020/09/13/nomad-templates.html">&lt;p&gt;I work on a project that has adopted &lt;a href=&quot;https://www.nomadproject.io/&quot;&gt;Hashicorp’s Nomad&lt;/a&gt; as a job scheduler to orchestrate both Windows-based executables and Docker containers.  Given the need to support mulitple environments, we were faced with duplicating our job files (since at least the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;datacenter&lt;/code&gt; property needs up dated per environment.  Finding a template language and code to do replacements became important to reduce duplication.&lt;/p&gt;
+
+&lt;h3 id=&quot;templating-solution&quot;&gt;Templating Solution&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://palletsprojects.com/p/jinja/&quot;&gt;Jinja2 templates&lt;/a&gt; were a good solution for this given it’s a a mature templating solution and easily implemented with python.  Support for usability outside of web pages, default functions, loops, and conditionals were awesome features we needed.&lt;/p&gt;
+
+&lt;h3 id=&quot;example-template&quot;&gt;Example Template&lt;/h3&gt;
+
+&lt;p&gt;This job file does not have a template.  The datacenter property is the first key problem.  Here’s what it looks like without the temp.ate&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;job &quot;login-web-server&quot; {
+  datacenters = [&quot;this-is-the-name-of-your-datacenter&quot;]
+
+  group &quot;login-group&quot; {
+    task &quot;web-server&quot; {
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The datacenter property makes it so the job file only can be used for one environment.  but once you have it templated like below, you can just specify it once in the template and built out full files for submission.  For this example, we picked &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;{$ obj. $}&lt;/code&gt; as our templating special characters.  The python gets easier with the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;obj&lt;/code&gt; part so you can bind an object to the template.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;job &quot;login-web-server&quot; {
+  datacenters = [&quot;{$ obj.datacenter $}&quot;]
+
+  group &quot;login-group&quot; {
+    task &quot;web-server&quot; {
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;where-is-the-data-coming-from-for-the-template&quot;&gt;Where is the data coming from for the template?&lt;/h3&gt;
+
+&lt;p&gt;We used json files.  They can be easily read by python into a dictionary and bound to the jinja2 template.  Here’s an example file. Notice the property name is the same as the property after &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;obj.&lt;/code&gt; above.&lt;/p&gt;
+
+&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;//data.json&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nl&quot;&gt;datacenter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;us-west-1&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;how-does-the-data-get-bound-to-the-template&quot;&gt;How does the data get bound to the template&lt;/h3&gt;
+
+&lt;p&gt;The following code loads up your json file, sets up the jinja2 template, and renders.&lt;/p&gt;
+
+&lt;div class=&quot;language-py highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'data.json'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;json_file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;job-template.hcl&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;template&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;json&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;load&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;json_file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;loader&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DictLoader&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;({&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;templateName&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;template&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;read&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()}),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;variable_start_string&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;{$&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;variable_end_string&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;$}&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# create template loader with our specific variable annotations
+&lt;/span&gt;    &lt;span class=&quot;n&quot;&gt;env&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;loader&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;loader&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;job_file_with_data&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;env&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_template&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;new_template_name&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;render&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ch&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# create the merged job file
+&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h3 id=&quot;schedule-your-process-with-the-new-job-file&quot;&gt;Schedule your process with the new job file&lt;/h3&gt;
+
+&lt;p&gt;You can now submit the newly created file to your nomad cluster to scheudle your process.  I highly recommend &lt;a href=&quot;https://github.com/jrxfive/python-nomad&quot;&gt;this library&lt;/a&gt; for a nomad client.  It encapsulates the API calls really well.  Submitting a job is as simple as&lt;/p&gt;
+
+&lt;div class=&quot;language-py highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nomad&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Nomad&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;host&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;172.16.100.10&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;timeout&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;job&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;register_job&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;job_name&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;job_file_with_data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;hr /&gt;
+&lt;p&gt;&lt;strong&gt;resources:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.nomadproject.io/&quot;&gt;https://www.nomadproject.io/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://palletsprojects.com/p/jinja/&quot;&gt;https://palletsprojects.com/p/jinja/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://pypi.org/project/Jinja2/&quot;&gt;https://pypi.org/project/Jinja2/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/jrxfive/python-nomad&quot;&gt;https://github.com/jrxfive/python-nomad&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</content><author><name></name></author><category term="hashicorp" /><category term="nomad" /><category term="python" /><category term="jinja2" /><summary type="html">I work on a project that has adopted Hashicorp’s Nomad as a job scheduler to orchestrate both Windows-based executables and Docker containers. Given the need to support mulitple environments, we were faced with duplicating our job files (since at least the datacenter property needs up dated per environment. Finding a template language and code to do replacements became important to reduce duplication.</summary></entry><entry><title type="html">using aws, route53, lightsail to setup a wordpress blog</title><link href="/2020/09/05/setting-up-wife-blog.html" rel="alternate" type="text/html" title="using aws, route53, lightsail to setup a wordpress blog" /><published>2020-09-05T12:00:00+00:00</published><updated>2020-09-05T12:00:00+00:00</updated><id>/2020/09/05/setting-up-wife-blog</id><content type="html" xml:base="/2020/09/05/setting-up-wife-blog.html">&lt;p&gt;My wife asked me to setup a travel blog for her.  I wanted to maximize our flexbility with look and feel, have no adds and be as cheap as possible.  We ended up with a wordpress instance on AWS Lightsail with the domain name from aws as well.  Found really good tutorials for this so I’ll link those.  You can find the blog here &lt;a href=&quot;https://travel.nomadley.com&quot;&gt;https://travel.nomadley.com&lt;/a&gt;
+&lt;br /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;created-an-aws-account-and-signed-into-console&quot;&gt;Created an AWS account and signed into console&lt;/h3&gt;
+
+&lt;h3 id=&quot;get-a-domain-using-route-53&quot;&gt;Get a domain using Route 53&lt;/h3&gt;
+&lt;p&gt;Used this &lt;a href=&quot;https://console.aws.amazon.com/route53/home#DomainRegistration:&quot;&gt;link&lt;/a&gt; to create a new domain.&lt;/p&gt;
+
+&lt;h3 id=&quot;setup-lightsail-with-wordpress&quot;&gt;Setup Lightsail with Wordpress&lt;/h3&gt;
+
+&lt;p&gt;This &lt;a href=&quot;https://lightsail.aws.amazon.com/ls/docs/en_us/articles/amazon-lightsail-tutorial-launching-and-configuring-wordpress&quot;&gt;link&lt;/a&gt; was a really great walk through.  It was pretty plug and play.  One note was the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;A&lt;/code&gt; record for the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;travel&lt;/code&gt; subdomain, set that up in a DNS zoen in LightSail.&lt;/p&gt;
+
+&lt;h3 id=&quot;setup-https&quot;&gt;Setup HTTPS&lt;/h3&gt;
+
+&lt;p&gt;This &lt;a href=&quot;https://lightsail.aws.amazon.com/ls/docs/en_us/articles/amazon-lightsail-using-lets-encrypt-certificates-with-wordpress&quot;&gt;link&lt;/a&gt; was what I used to set up HTTPS.  Worked great&lt;/p&gt;
+
+&lt;hr /&gt;
+&lt;p&gt;&lt;strong&gt;resources:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://lightsail.aws.amazon.com/ls/docs/en_us/articles/amazon-lightsail-tutorial-launching-and-configuring-wordpress&quot;&gt;https://lightsail.aws.amazon.com/ls/docs/en_us/articles/amazon-lightsail-tutorial-launching-and-configuring-wordpress&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://lightsail.aws.amazon.com/ls/docs/en_us/articles/amazon-lightsail-using-lets-encrypt-certificates-with-wordpress&quot;&gt;https://lightsail.aws.amazon.com/ls/docs/en_us/articles/amazon-lightsail-using-lets-encrypt-certificates-with-wordpress&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://console.aws.amazon.com/route53/home#DomainRegistration&quot;&gt;https://console.aws.amazon.com/route53/home#DomainRegistration&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</content><author><name></name></author><category term="aws" /><category term="lightsail" /><category term="route53" /><category term="letsencrypt" /><summary type="html">My wife asked me to setup a travel blog for her. I wanted to maximize our flexbility with look and feel, have no adds and be as cheap as possible. We ended up with a wordpress instance on AWS Lightsail with the domain name from aws as well. Found really good tutorials for this so I’ll link those. You can find the blog here https://travel.nomadley.com</summary></entry><entry><title type="html">using aws textract to read text from images</title><link href="/2020/08/27/python-textract-images.html" rel="alternate" type="text/html" title="using aws textract to read text from images" /><published>2020-08-27T12:00:00+00:00</published><updated>2020-08-27T12:00:00+00:00</updated><id>/2020/08/27/python-textract-images</id><content type="html" xml:base="/2020/08/27/python-textract-images.html">&lt;p&gt;To help with a game I play with some friends, I needed to find a way to read text out of screenshots.  I found Textract, an Amazon API that can be used to do this.  Here’s every step I did.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;setup-aws-textract-access-and-user&quot;&gt;Setup AWS Textract access and user&lt;/h3&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;setup an aws account in us-east2.  you’ll end up needing to put a credit card # in but don’t worry, the charges are in the single digits per month from my experience.  &lt;a href=&quot;https://us-east-2.console.aws.amazon.com/&quot;&gt;https://us-east-2.console.aws.amazon.com/&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;create a user for the scritp to use. navigate to &lt;a href=&quot;https://console.aws.amazon.com/iam/home?region=us-east-2#/users&quot;&gt;https://console.aws.amazon.com/iam/home?region=us-east-2#/users&lt;/a&gt;, follow through the wizard with the following instructions:&lt;/p&gt;
+    &lt;ul&gt;
+      &lt;li&gt;Whatever name you want&lt;/li&gt;
+      &lt;li&gt;Set Access Type to &lt;strong&gt;Programmatic access&lt;/strong&gt;&lt;/li&gt;
+      &lt;li&gt;Create a permission group, add the permission &lt;strong&gt;AmazonTextractFullAccess&lt;/strong&gt; to it.&lt;/li&gt;
+      &lt;li&gt;Assign your user to the newly created group&lt;/li&gt;
+      &lt;li&gt;Tags don’t matter&lt;/li&gt;
+      &lt;li&gt;IMPORTANT: Save the &lt;strong&gt;Access key ID&lt;/strong&gt; and &lt;strong&gt;Secret access key&lt;/strong&gt; locally&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;how-to-call-the-textract-api&quot;&gt;How to call the Textract API&lt;/h3&gt;
+
+&lt;p&gt;Using the boto3 client, call the API passing in the png as a byte array with some simple config settings.&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;file_name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'that_dope_file.png'&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;my_config&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;region_name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'us-east-2'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;signature_version&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'v4'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;retries&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;s&quot;&gt;'max_attempts'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;s&quot;&gt;'mode'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'standard'&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;# Read document content
+&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;file_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'rb'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;document&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;imageBytes&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;bytearray&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;document&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;read&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;# Amazon Textract client
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;textract&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;boto3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'textract'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;my_config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;# Call Amazon Textract
+&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;textract&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;detect_document_text&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Document&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'Bytes'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;imageBytes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h3 id=&quot;how-to-parse-the-results&quot;&gt;How to parse the results&lt;/h3&gt;
+
+&lt;p&gt;This is pretty simple, it categorized the image as BlockTypes.  Pull out is the LINE block types, which have text in them.&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;arr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;item&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;extract&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Blocks&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]:&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;item&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;BlockType&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;LINE&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;arr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;append&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;item&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Text&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;arr&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Now we have an array with all the sweet text from the image.  Nice.&lt;/p&gt;
+
+&lt;hr /&gt;
+&lt;p&gt;&lt;strong&gt;resources:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://aws.amazon.com/textract/&quot;&gt;https://aws.amazon.com/textract/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://textract.readthedocs.io/&quot;&gt;https://textract.readthedocs.io/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html&quot;&gt;https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</content><author><name></name></author><category term="python" /><category term="aws" /><category term="textract" /><summary type="html">To help with a game I play with some friends, I needed to find a way to read text out of screenshots. I found Textract, an Amazon API that can be used to do this. Here’s every step I did.</summary></entry><entry><title type="html">using jekyll, github pages, github actions to setup this blog</title><link href="/2020/08/21/setting-up-blog.html" rel="alternate" type="text/html" title="using jekyll, github pages, github actions to setup this blog" /><published>2020-08-21T12:00:00+00:00</published><updated>2020-08-21T12:00:00+00:00</updated><id>/2020/08/21/setting-up-blog</id><content type="html" xml:base="/2020/08/21/setting-up-blog.html">&lt;p&gt;I found lots of tutorials on setting up a github pages blog with jekyll but none that had every step I did.  This applies to jekyll v4.  Here’s every step I did.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;installation-of-repositoryrubyjekyllhydeout&quot;&gt;Installation of Repository/Ruby/Jekyll/Hydeout&lt;/h3&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;Created new repo under my github account.  named &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;username&amp;gt;.github.io&lt;/code&gt; so it’s picked up by github pages.  cloned repo locally and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cd&lt;/code&gt; into that directory.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt; Followed &lt;a href=&quot;https://jekyllrb.com/docs/installation/macos/&quot;&gt;these&lt;/a&gt; instructions to install ruby and jekyll&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Created new site using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;jekyll new blog&lt;/code&gt;.  I then moved everything from the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/blog&lt;/code&gt; folder back to root (not necessary, I just preferred it there).&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Installed hydeout theme by adding &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gem &quot;jekyll-theme-hydeout&quot;, &quot;~&amp;gt; 4.1&quot;&lt;/code&gt; to my Gemfile.  Ran &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;bundle install&lt;/code&gt;.  (reference: &lt;a href=&quot;https://github.com/fongandrew/hydeout&quot;&gt;https://github.com/fongandrew/hydeout&lt;/a&gt;)&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;configuring-jekyll&quot;&gt;Configuring Jekyll&lt;/h3&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;Updates to _config.yml&lt;/p&gt;
+
+    &lt;div class=&quot;language-yml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; &lt;span class=&quot;na&quot;&gt;title&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;kevin buckley&lt;/span&gt;
+ &lt;span class=&quot;na&quot;&gt;email&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;kbuckley17@gmail.com&lt;/span&gt;
+ &lt;span class=&quot;na&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;things I learn in tech&lt;/span&gt;
+ &lt;span class=&quot;na&quot;&gt;baseurl&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# the subpath of your site, we are at root&lt;/span&gt;
+ &lt;span class=&quot;na&quot;&gt;url&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;https://kevinbuckley.github.io&quot;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# the base hostname &amp;amp; protocol &lt;/span&gt;
+ &lt;span class=&quot;na&quot;&gt;theme&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;jekyll-theme-hydeout&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# using the hydeout theme&lt;/span&gt;
+ &lt;span class=&quot;na&quot;&gt;plugins&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+ &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;jekyll-feed&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;# adds the feed link to the sidebar&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Added &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;me.md&lt;/code&gt; page for contact info and such&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Removed post comments.  Did this by adding an empty file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_includes/comments.html&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Updated styles.  Added an &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;assets/css/main.scss&lt;/code&gt; file.  Example here:&lt;/p&gt;
+
+    &lt;div class=&quot;language-scss highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; &lt;span class=&quot;na&quot;&gt;---&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;
+ # &lt;/span&gt;&lt;span class=&quot;na&quot;&gt;Jekyll&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;na&quot;&gt;needs&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;na&quot;&gt;front&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;na&quot;&gt;matter&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;na&quot;&gt;for&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;na&quot;&gt;SCSS&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;na&quot;&gt;files&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;
+ &lt;/span&gt;&lt;span class=&quot;na&quot;&gt;---&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;
+
+ $&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;link-color&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;navy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+ &lt;span class=&quot;k&quot;&gt;@import&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;hydeout&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Adding custom links to the sidebar by adding a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_includes/custom-icon-links.html&lt;/code&gt;&lt;/p&gt;
+
+    &lt;div class=&quot;language-html highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; &lt;span class=&quot;nt&quot;&gt;&amp;lt;a&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;id=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;github-link&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;icon&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;title=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Github Project&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;aria-label=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Github Project&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;href=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;https://github.com/kevinbuckley&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+     /* svg link */
+ &lt;span class=&quot;nt&quot;&gt;&amp;lt;/a&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Setting up a home page in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.md&lt;/code&gt; .  Show the a list of all the posts.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;time-to-add-a-post&quot;&gt;Time to add a post!&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;Added my first post under &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_posts/&lt;/code&gt;.  Note the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;yyyy-mm-dd-mytitle.md&lt;/code&gt; name format.  This is the first post.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;publish-to-github-pages&quot;&gt;Publish to Github Pages&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;&lt;a href=&quot;https://jekyllrb.com/docs/continuous-integration/github-actions/&quot;&gt;These&lt;/a&gt; instructions were really impressive.  Followed it and it worked without a hitch&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;hr /&gt;
+&lt;p&gt;&lt;strong&gt;resources:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://jekyllrb.com/docs/&quot;&gt;https://jekyllrb.com/docs/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://jekyllrb.com/docs/continuous-integration/github-actions/&quot;&gt;https://jekyllrb.com/docs/continuous-integration/github-actions/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/fongandrew/hydeout&quot;&gt;https://github.com/fongandrew/hydeout&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</content><author><name></name></author><category term="github" /><category term="ruby" /><category term="markdown" /><category term="jekyll" /><summary type="html">I found lots of tutorials on setting up a github pages blog with jekyll but none that had every step I did. This applies to jekyll v4. Here’s every step I did.</summary></entry></feed>
