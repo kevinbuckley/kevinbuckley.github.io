@@ -52,7 +52,7 @@ The following code loads up your json file, sets up the jinja2 template, and ren
 ```py
 with open('data.json') as json_file, open("job-template.hcl") as template:
     data = json.load(json_file)
-    loader = DictLoader({templateName: template.read()}), variable_start_string="{%", variable_end_string="%}") # create template loader with our specific variable annotations
+    loader = DictLoader({templateName: template.read()}), variable_start_string="{$", variable_end_string="$}") # create template loader with our specific variable annotations
     env = Environment(loader=loader)
     job_file_with_data = env.get_template("new_template_name").render(ch=data) # create the merged job file
 
