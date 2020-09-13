@@ -1,6 +1,6 @@
 ---
 layout: default
-title: "posts"
+title: "kevin buckley blog"
 sidebar_link: true
 ---
 

@@ -39,7 +39,7 @@ job "login-web-server" {
 We used json files.  They can be easily read by python into a dictionary and bound to the jinja2 template.  Here's an example file. Notice the property name is the same as the property after `obj.` above.  
 
 ``` js
-//job-data.json
+//data.json
 {
     datacenter: "us-west-1"
 }
@@ -50,15 +50,25 @@ We used json files.  They can be easily read by python into a dictionary and bou
 The following code loads up your json file, sets up the jinja2 template, and renders.
 
 ```py
-loader = DictLoader({templateName: template_string}), variable_start_string="{%", variable_end_string="%}") # create template loader with our specific variable annotations
-env = Environment(loader=loader)
-merged_job_file = env.get_template("new_template_name").render(ch=variables) # create the merged job file
+with open('data.json') as json_file, open("job-template.hcl") as template:
+    data = json.load(json_file)
+    loader = DictLoader({templateName: template.read()}), variable_start_string="{%", variable_end_string="%}") # create template loader with our specific variable annotations
+    env = Environment(loader=loader)
+    job_file_with_data = env.get_template("new_template_name").render(ch=data) # create the merged job file
 
 ```
+### Schedule your process with the new job file
 
+You can now submit the newly created file to your nomad cluster to scheudle your process.  I highly recommend [this library](https://github.com/jrxfive/python-nomad) for a nomad client.  It encapsulates the API calls really well.  Submitting a job is as simple as
+
+```py
+n = nomad.Nomad(host="172.16.100.10", timeout=5)
+n.job.register_job("job_name", job_file_with_data)
+```
 
 ----
 **resources:**
 * [https://www.nomadproject.io/](https://www.nomadproject.io/)
 * [https://palletsprojects.com/p/jinja/](https://palletsprojects.com/p/jinja/)
 * [https://pypi.org/project/Jinja2/](https://pypi.org/project/Jinja2/)
+* [https://github.com/jrxfive/python-nomad](https://github.com/jrxfive/python-nomad)
